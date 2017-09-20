@@ -5,8 +5,15 @@ date: "September 18, 2017"
 output: pdf_document
 ---
 
-```{r setup, echo=TRUE, eval=FALSE}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(vioplot)
+library(sm)
+library(dplyr)
+library(tidyr)
+library(data.table)
+library(pander)
 ```
 
 ## Problem 4
@@ -28,9 +35,8 @@ There are hundreds of suggestions on my code. The most common suggestion include
 
 Below is the summary of 13 observers with mean, standard deviation and correlation for each observer.
 
-```{r, echo=TRUE, eval=FALSE}
+```{r, echo = FALSE}
 # Load data
-library(data.table)
 data_q6<-readRDS("C:/Users/Echo/Desktop/2017 Fall/Statistical Package/HW3/HW3_data.rds")
 result_q6 <- matrix(nrow = 13,ncol = 6)
 colnames(result_q6) <- c("Observers", "mean1", "mean2", "sd1", "sd2","correlation")
@@ -43,9 +49,6 @@ for(i in 1:13){
   result_q6[i,5] = sd(middle_q6[, 3])
   result_q6[i,6] = cor(middle_q6[, 2], middle_q6[, 3])
 }
-```
-
-```{r, echo=TRUE, eval=FALSE}
 knitr::kable(result_q6, caption="Summary of 13 Observers")
 ```
 
@@ -53,7 +56,7 @@ knitr::kable(result_q6, caption="Summary of 13 Observers")
 
 Below is the boxplot of means of 13 observers. The mean value of dv1 is larger than that of dv2.
 
-```{r, echo=TRUE, eval=FALSE}
+```{r, echo = FALSE}
 par(mfcol=c(1,2))
 boxplot(result_q6[, 2], data = result_q6, main = "Boxplot of Means from Dev1", xlab = "Dev1", ylab = "Mean Value")
 boxplot(result_q6[, 3], data = result_q6, main = "Boxplot of Means from Dev2", xlab = "Dev2", ylab = "Mean Value")
@@ -63,9 +66,7 @@ boxplot(result_q6[, 3], data = result_q6, main = "Boxplot of Means from Dev2", x
 
 Below is the violin plot of sd of 13 observers. 
 
-```{r, echo=TRUE, eval=FALSE}
-library(vioplot)
-library(sm)
+```{r, echo = FALSE}
 par(mfcol=c(1,2))
 vioplot(result_q6[, 4], names=c("sd1"), col="gold") 
 title ("Violin Plot of Sd from Dev1")
@@ -77,9 +78,7 @@ title ("Violin Plot of Sd from Dev2")
 
 Submmary table after tidying is shown as below.
 
-```{r, echo=TRUE, eval=FALSE}
-library(dplyr)
-library(tidyr)
+```{r, echo = FALSE}
 url <- "http://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/BloodPressure.dat"
     blood_pressure_raw <- read.table(url, header = F, skip = 1, fill = T, stringsAsFactors = F)
     blood_pressure_tidy <- blood_pressure_raw[-1,-5]
@@ -93,7 +92,7 @@ knitr::kable(summary(blood_pressure_tidy), caption="Blood Pressure Data Summary"
 
 ## Problem 8
 
-```{r, echo=TRUE, eval=FALSE}
+```{r, echo = FALSE}
 # function expression
 f<-function(x){
   return(3^x - sin(x) + cos(5*x))
@@ -102,7 +101,7 @@ f<-function(x){
 
 From the table above, we can observe that the value of the function is positive after 5 due to the large positive value of 3^x.
 
-```{r, echo=TRUE, eval=FALSE}
+```{r, echo = FALSE}
 x <- seq(-50, 5, by = 0.1)
  plot(x,f(x),main = "f(x)", type = "l")
  abline(h = 0, col = "red")
@@ -112,13 +111,13 @@ So we shrink the dependent variable to the data range of (-50,0). Now the plot o
 
 To simplify the question, we only observe one 'period' which correspond to x between the range of (-5,0).
 
-```{r, echo=TRUE, eval=FALSE}
+```{r, echo = FALSE}
 x <- seq(-5, 0, by = 0.1)
  plot(x,f(x),main = "f(x)", type = "l")
  abline(h = 0, col = "red")
 ```
 
-```{r, echo=TRUE, eval=FALSE}
+```{r, echo = FALSE}
 # Newton's method with a first order approximation
 newton <- function(f, tol = 0.001, x0, N = 500){
   # N = total number of iterations
@@ -142,9 +141,7 @@ newton <- function(f, tol = 0.001, x0, N = 500){
   }
   return(p[1:(i-1)])
 }
-```
 
-```{r, echo=TRUE, eval=FALSE}
 newton(f, x0 = -3)
 newton(f, x0 = -3.5)
 newton(f, x0 = -4)
@@ -159,8 +156,7 @@ In the range of x between -5 and 0, ther are four solutions, -2.8870, -3.5287, -
 
 Load table using function fread.
 
-```{r, echo=TRUE, eval=FALSE}
-library(data.table)
+```{r, echo = FALSE, results = "hide", message = FALSE, warning = FALSE}
 #this had the defect code and description
 Car_Gebreken_select <- fread(input = "C:/Users/Echo/Downloads/Open_Data_RDW__Gebreken.csv", header = T, select=c(1,6), showProgress=F)
 colnames(Car_Gebreken_select) <- c("defect", "description")
@@ -176,63 +172,69 @@ colnames(Car_Person_select) <- c("license_plate", "make", "model")
 
 ### b. Merge three tables
 
-Merge tables using merge function.
+Merge tables using merge function. 1987553 observations in the merged table.
 
-```{r, echo=TRUE, eval=FALSE}
+```{r, echo = FALSE}
 merge2<-merge(Car_Geconstat_select,Car_Person_select,by="license_plate",all=TRUE)
 merge3<-merge(Car_Gebreken_select,merge2,by="defect",all=TRUE)
 ```
 
 ### c. Clean the data and remove NA
-```{r, echo=TRUE, eval=FALSE}
+
+125122 observations remained after removing NA.
+
+```{r, echo = FALSE}
 # Remove NA
 mergec<-merge3[apply(merge3,1,function(x)!any(is.na(x))),,drop=F] 
 ```
 
 ### d. How many DIFFERENT makes and models of cars
-```{r, echo=TRUE, eval=FALSE}
+
+35 makes and 385 models.
+
+```{r, echo = FALSE}
 merged <- mergec[grep("2017",mergec$inspection_date),]
 makes <- n_distinct(merged$make)
 models <- n_distinct(merged$model)
-makes
-models
 ```
 
 ### e. 5 most frequent defects and  make/models
 
 Select columns we need utilizaing sqldf funcion.
 
-```{r, echo=TRUE, eval=FALSE}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 library(sqldf)
-freq5<-sqldf("select description,make, count (*) as count 
+freq5<-sqldf("select defect, make, count (*) as count 
               from merged 
-             Group by description 
+             Group by defect 
              ORDER BY count DESC 
              LIMIT 5",row.names=TRUE)
 knitr::kable(freq5, caption="5 most frequetn defects")
 ```
 
 ### f. Relationship between number of defects and make
-```{r, echo=TRUE, eval=FALSE}
+```{r, echo = FALSE}
 qf <- sqldf("select make, count (*) as count 
             from merged 
-            group by description 
+            group by defect 
             ORDER BY count DESC",row.names=TRUE)
+qf<-mutate(qf,make = as.numeric(as.factor(make)))
 lm1 <- lm(count ~ make, data = qf)
-knitr::kable(summary(lm1)$coefficients)
+pander(summary(lm1))
 aov1 <- aov(formula = count ~ make, data = qf)
-summary(aov1)
+pander(summary(aov1))
 ```
  
 ### g. Relationship between number of defects and model
-```{r, echo=TRUE, eval=FALSE}
+```{r, echo = FALSE}
 qg <- sqldf("select model, count (*) as count 
             from merged group 
-            by description 
+            by defect 
             ORDER BY count DESC",row.names=TRUE)
+qg<-mutate(qg,model = as.numeric(as.factor(model)))
 lm2 <- lm(count~model, data = qg)
-knitr::kable(summary(lm2)$coefficients)
+pander(summary(lm2))
 aov2 <- aov(formula = count ~ model, data = qg)
-summary(aov2)
+pander(summary(aov2))
 ```
 
