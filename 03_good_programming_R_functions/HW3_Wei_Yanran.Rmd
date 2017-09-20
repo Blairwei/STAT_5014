@@ -40,14 +40,14 @@ Below is the summary of 13 observers with mean, standard deviation and correlati
 data_q6<-readRDS("C:/Users/Echo/Desktop/2017 Fall/Statistical Package/HW3/HW3_data.rds")
 result_q6 <- matrix(nrow = 13,ncol = 6)
 colnames(result_q6) <- c("Observers", "mean1", "mean2", "sd1", "sd2","correlation")
-stat <- function(x){
+# In the function, given the number of observer, creating a data table named middle_q6 first. In this table, only records related to the given observer are kept. Then, based on filtered data, using mean, sd and cor function to calculate corresponding statistical value.
+createSumStats <- function(x){
   middle_q6<-subset(data_q6,data_q6[, 1]==x)
   d <- c(mean(middle_q6[, 1]), mean(middle_q6[, 2]), mean(middle_q6[, 3]), sd(middle_q6[, 2]),   sd(middle_q6[, 3]), cor(middle_q6[, 2], middle_q6[, 3]))
   return(d)
 }
 for(i in 1:13){
-  result_q6[i, ] = stat(i)
-  
+  result_q6[i, ] = createSumStats(i)
 }
 knitr::kable(result_q6, caption="Summary of 13 Observers")
 ```
