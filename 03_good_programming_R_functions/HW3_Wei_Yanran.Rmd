@@ -40,14 +40,14 @@ Below is the summary of 13 observers with mean, standard deviation and correlati
 data_q6<-readRDS("C:/Users/Echo/Desktop/2017 Fall/Statistical Package/HW3/HW3_data.rds")
 result_q6 <- matrix(nrow = 13,ncol = 6)
 colnames(result_q6) <- c("Observers", "mean1", "mean2", "sd1", "sd2","correlation")
+stat <- function(x){
+  middle_q6<-subset(data_q6,data_q6[, 1]==x)
+  d <- c(mean(middle_q6[, 1]), mean(middle_q6[, 2]), mean(middle_q6[, 3]), sd(middle_q6[, 2]),   sd(middle_q6[, 3]), cor(middle_q6[, 2], middle_q6[, 3]))
+  return(d)
+}
 for(i in 1:13){
-  middle_q6<-subset(data_q6,data_q6[, 1]==i)
-  result_q6[i,1] = mean(middle_q6[, 1])
-  result_q6[i,2] = mean(middle_q6[, 2])
-  result_q6[i,3] = mean(middle_q6[, 3])
-  result_q6[i,4] = sd(middle_q6[, 2])
-  result_q6[i,5] = sd(middle_q6[, 3])
-  result_q6[i,6] = cor(middle_q6[, 2], middle_q6[, 3])
+  result_q6[i, ] = stat(i)
+  
 }
 knitr::kable(result_q6, caption="Summary of 13 Observers")
 ```
@@ -228,8 +228,8 @@ pander(summary(aov1))
 ### g. Relationship between number of defects and model
 ```{r, echo = FALSE}
 qg <- sqldf("select model, count (*) as count 
-            from merged group 
-            by defect 
+            from merged 
+            group by defect 
             ORDER BY count DESC",row.names=TRUE)
 qg<-mutate(qg,model = as.numeric(as.factor(model)))
 lm2 <- lm(count~model, data = qg)
