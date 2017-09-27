@@ -1,0 +1,210 @@
+---
+title: "HW4_Wei_Yanran"
+author: "Yanran Wei"
+date: "September 26, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem 3
+
+According to Roger Peng, the focus of the EDA stage of an analysis are listed as below:
+
+1. Show comparisons.
+2. Show causality, mechanism, explanation and systematic structure.
+3. Show multivariate data.
+4. Integrate evidence.
+5. Descirbe and document the evidence.
+6. Content. Analytical presentations ultimately stand or fall depending on the quality, relevance and integrity of their content.
+
+## Problem 4
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+library(xlsx)
+# Load Data
+prob4_data1 <- read.xlsx("C:/Users/Echo/Desktop/2017 Fall/Statistical Package/HW4/STAT_5015_homework/04_projecting_knowledge_plots/HW4_data.xlsx", sheetIndex = 1)
+prob4_data2 <- read.xlsx("C:/Users/Echo/Desktop/2017 Fall/Statistical Package/HW4/STAT_5015_homework/04_projecting_knowledge_plots/HW4_data.xlsx", sheetIndex = 2)
+prob4_data <- rbind(prob4_data1, prob4_data2)
+```
+
+### Question 1
+
+1846 observations are included in the dataset. The summary of the dataset is as below. Three variables are included in the dataset, block, depth and phosphate.
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+#Summary of data
+library(pander)
+pander(summary(prob4_data), caption = "Summary of Data")
+```
+
+### Question 2
+
+Looking at the first several lines of the dataset which is shown as below.
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+library(pander)
+pander(head(prob4_data), caption = "Sample Data")
+```
+
+Three variables contained in the data, block, depth and phosphate.
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+freq_block <- table(prob4_data$block)
+pander(freq_block, caption = "Value and Frequency of Block")
+```
+
+Block has 13 different values. Each value has 142 corresponding observations. Block is discrete variable whicle depth and phosphate are continuous variables. 
+
+### Question 3
+As block is discrete vairable, we want to get overview of the distribution of depth and phosphate corresponding to different blocks.
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+require(ggplot2)
+par(mfrow = c(1, 2))
+qplot(depth, data = prob4_data, geom = c("density"), facets = block~., fill = block)
+qplot(phosphate, data = prob4_data, geom = c("density"), facets = block~., fill = block)
+```
+The density of depth seems lower than that of phosphate.
+
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+require(MASS)
+ggplot(prob4_data, aes(x = depth, y= phosphate, colour = block)) +
+  stat_density2d(aes(alpha = ..density..), geom = 'raster', contour = FALSE) +
+  geom_point()+
+  expand_limits(x = 35, yend = 6)
+```
+
+The data points of depth and phosphate are dispersed in the shape of circle according to the graph below.
+
+To ignore the influence of block, we made scatterplot and histogram of depth and phosphate for each block.
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+library(ggthemes)
+ggplot(prob4_data, aes(x = depth, y = phosphate, fill = block)) +
+  geom_smooth(method = lm) +
+  geom_point(shape =21) +
+  facet_grid(.~block) +
+  theme_few() +
+  scale_colour_few()
+```
+For depth equal to 5, the phosphate value has around five different levels. For other blocks, no obvious linear relationship.
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+library(lattice)
+histogram(depth~phosphate|as.factor(block), data = prob4_data,
+          main = "Depth and Phosphate by Block", 
+          xlab = "Block")
+```
+From the histogram, block 5 only has around 5 bars which is identical to what we have observed in the scatterplot. For blocks 1, there are only 5 bars too. No other information I can get from the graph.
+
+So, what's relationship between block and depth, block and phosphate?
+```{r, echo=F, warning=FALSE, message=FALSE}
+mean <- matrix(nrow = 13, ncol = 3)
+colnames(mean) <- c("block", "depth", "phosphate")
+Mean_depth <- function(x){
+  middle <- subset(prob4_data,prob4_data[, 1]==x)
+  d1 <- c(i, mean(middle[, 2]), mean(middle[, 3]))
+  return(d1)
+}
+
+for(i in 1:13){
+  mean[i, ] = Mean_depth(i)
+}
+
+# Remove NA
+mean_cle <- data.frame(mean[apply(mean,1,function(x)!any(is.na(x))),,drop=F])
+```
+
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+# Plot
+par(mfrow = c(1, 2))
+ggplot (data = mean_cle, aes(x = depth, y = reorder(block, depth), colour = "Red")) +
+  geom_point(size =3) +
+  ggtitle("Depth VS Block")
+ggplot (data = mean_cle, aes(x = phosphate, y = reorder(block, phosphate), colour = "Red")) +
+  geom_point(size =3) +
+  ggtitle("Phosphate VS Block")
+```
+
+From the first graph, we can see that block 11 has the highest average depth value while block 13 has the lowest depth value. No obvious pattern between depth and block. 
+
+From the second graph, we can see that block 5 has the higest phosphate while block 6 has the lowest phosphate value. No obvious pattern between depth and block, either.
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+ggplot(prob4_data, aes(x= block, y = depth, group = block, colour = block)) +
+  geom_boxplot()
+ggplot(prob4_data, aes(x= block, y = phosphate, group = block, colour = block)) +
+  geom_boxplot()
+```
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+ggplot(prob4_data, aes(x = block, y = depth, group = block, colour = block)) +
+  geom_violin(trim = FALSE) +
+  geom_boxplot(width =.1, fill = "black", outlier.colour = NA) +
+  stat_summary(fun.y = median, geom = "point", fill = "black", shape = 31, size = 2.1)
+```
+
+In the box plot, the median depth value for block 1 to 10 does not have big difference while that for block 11 to 13 differs a lot. The median phosphate value for block 7 is the smallest one compared to that of other blocks.
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+ggplot(mean_cle, aes(x = depth, y = phosphate, size = block)) +
+  geom_point(shape = 21, colour = "black", fill = "cornsilk") +
+  scale_size_area(max_size = 15)
+```
+From the bubble plot in which bubble's area represent the size of block, one big bubble is located in left side the graph where the depth value is rather small. The other relatively big bubbles are maily located in the right side of graph when depth is rather large.
+
+### Question 4
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+library(scatterplot3d)
+block_lm <- lm(block ~ depth + phosphate, data = prob4_data1)
+scat_3d <- with(prob4_data1,scatterplot3d(block,depth,phosphate,pch=21,main="block vs. depth and phosphate", bg = 'blue', xlab="block", ylab="depth", zlab="phosphate", axis=TRUE))
+scat_3d$plane3d(block_lm, col = 'dodgerblue4')
+```
+
+In the 3D graph, no obvious relationship can be observed between block, depth and phosphate.
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+panel.cor <- function(x, y, digits = 2, prefix = " ", cex.cor, ...){
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y, use = "complete.obs"))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste(prefix, txt, sep = " ")
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex.cor * (1 + r)/2)
+}
+
+panel.hist <- function(x, ...){
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5))
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks
+  nB <- length(breaks)
+  y <- h$counts
+  y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "white", ...)
+}
+
+pairs(prob4_data, upper.panel = panel.cor,
+      diag.panel = panel.hist,
+      lower.panel = panel.smooth)
+```
+
+The upper right triangle represents correlation between variables. The lower left triangle are scatterplot with smooth lines. The graph on diagnol are bar plots for each variables.
+
+So the correlation between block and depth is almost 0. The correaltion between block and phosphate is also almost 0. The correlation between depth and phosphate is 0.066. So block has no influence on depth and phosphate. However, from the scatterplot between depth and phosphate, we can not make a conclusion that there are realtion ship between these two variables although thier corrlation value is 0.066.
+
+## Problem 5
+
+In my opinion, the graph showing combination of histogram, scatterplot and correlation value plays an important role. It provide both statistical and visual analysis of variables.
+
+
+
