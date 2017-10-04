@@ -1,0 +1,429 @@
+---
+title: "HW5_Wei_Yanran"
+author: "Yanran Wei"
+date: "October 2, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(pander)
+library(ggplot2)
+library(sqldf)
+```
+
+## Problem 3
+
+In my opinion, there are three important points making a good figure.
+
+1. Content. "A picture is worth a thousand words". A good figure should present information on datasets.
+
+2. Show explanation of figure. For example, legend can help reader understand variables or lines on the graph.
+
+3. Integrate evidence. A figure can show something not obvious of the dataset, like mean, sum, which needed to be calculated based on raw data. 
+
+## Problem 4
+
+```{r, echo=FALSE}
+sucess_fun <- function(x){
+  sum(x)/10
+}
+```
+
+```{r, echo=FALSE}
+set.seed(12345)
+P4b_data <- matrix(rbinom(10, 1, prob = (30:40)/100), nrow = 10, ncol = 10)
+```
+
+### c
+
+```{r, echo=FALSE}
+col_prop <- apply(P4b_data, 2, sucess_fun)
+row_prop <- apply(P4b_data, 1, sucess_fun)
+pander(rbind(col_prop, row_prop), caption = "Proportion of Success")
+```
+
+From the table, we can see that the proportion of success is the same for each row which is 0.6. The proportion of success is 1 or 0 for each column. So the proportion does not follow the probability we determined in b.
+
+### d
+
+```{r, echo=FALSE}
+set.seed(12345)
+
+# Function to create matrix
+prob_func <- function(x){
+  matrix(rbinom(10, 1, prob = x), nrow = 10, ncol = 1)
+}
+P4d_data <- mapply(prob_func, x = c(31:40)/100)
+
+# Calcualte marginal success
+col_prop2 <- apply(P4d_data, 2, sucess_fun)
+row_prop2 <- apply(P4d_data, 1, sucess_fun)
+pander(rbind(col_prop2, row_prop2), caption = "Proportion of Success")
+```
+
+The proportion of success of each column and row is different.
+
+## Problem 5
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+
+#Load into data
+url <- "http://www2.isye.gatech.edu/~jeffwu/book/data/starch.dat"
+P5_raw<-read.table(url, header=F, skip=1, fill=T, stringsAsFactors = F)
+colnames(P5_raw) <- c("Starch", "Strength", "Thickness")
+```
+Data has the highest density for PO.
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+require(MASS)
+ggplot(P5_raw, aes(x = Thickness, y= Strength, colour = Starch)) +
+  stat_density2d(aes(alpha = ..density..), geom = 'raster', contour = FALSE) +
+  geom_point()+
+  expand_limits(x = 35, yend = 6)
+```
+
+```{r, echo = F}
+pander(summary(P5_raw), caption = "Summary of Data")
+pander(table(P5_raw$Starch), caption = "Summary of Starch")
+```
+
+The dataset contains 49 observations and three variables, starch, strength and thickness. For the categorical variable starch, three values are available, CA, CO and PO.
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+library(ggthemes)
+ggplot(P5_raw, aes(x = Thickness, y = Strength, fill = Starch)) +
+  geom_smooth(method = lm) +
+  geom_point(shape =21) +
+  facet_grid(.~Starch) +
+  theme_few() +
+  scale_colour_few()
+```
+From the graph, there is obvious linear relationship for CA and CO. The linear relationship is not obvious for PO.
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+library(lattice)
+histogram(Strength ~ Thickness|as.factor(Starch), data = P5_raw,
+          main = "Strength and Thickness by Starch", 
+          xlab = "Starch")
+```
+
+```{r, echo=FALSE}
+# Correlation and plot function
+panel.cor <- function(x, y, digits = 2, prefix = " ", cex.cor, ...){
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y, use = "complete.obs"))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste(prefix, txt, sep = " ")
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex.cor * (1 + r)/2)
+}
+
+panel.hist <- function(x, ...){
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5))
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks
+  nB <- length(breaks)
+  y <- h$counts
+  y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "white", ...)
+}
+
+pairs(P5_raw[, 2:3], upper.panel = panel.cor,
+      diag.panel = panel.hist,
+      lower.panel = panel.smooth)
+```
+
+The table created histograms of variables of Strength and Thickness. And from the lower-left graph, there is a linear relationship between strength and thickness. From the upper-right graph, the correlation between strength and thickness is 0.82.
+
+## Problem 6
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+    #we are grabbing a SQL set from here
+    # http://www.farinspace.com/wp-content/uploads/us_cities_and_states.zip
+
+    #read in data, looks like sql dump, blah
+    library(data.table)
+    states <- fread(input = "C:/Users/Echo/Desktop/states.sql", sep = "'", sep2 = ",", header = F, select = c(2,4))
+    colnames(states) <- c("State", "Abbre")
+    
+    ### YOU do the CITIES
+    ### I suggest the cities_extended.sql may have everything you need
+    ### can you figure out how to limit this to the 50?
+    cities <- fread(input = "C:/Users/Echo/Desktop/cities_extended.sql",sep = "'", sep2 = ",", header = F, select = c(2,4))
+    colnames(cities) <- c("City", "Abbre")
+```
+
+```{r, echo=FALSE}
+library(sqldf)
+# Delete repetitive records and state of PR 
+cities_dist <- sqldf("
+    select distinct City, Abbre
+    from cities
+    where not Abbre = 'PR'and not Abbre = 'DC'"
+    )
+
+# Combine two tables according to Abbreviation
+cities_states <- merge(cities_dist, states, by="Abbre", all.x = TRUE)
+```
+
+### Part b
+
+```{r, echo=FALSE}
+
+# Create a summary table of the number of cities included by state
+cities_count <- sqldf("
+    select Abbre, count(city) as City_Num, State
+    from cities_states
+    group by Abbre"
+    )
+cities_count[, 3] <- tolower(cities_count[, 3])
+pander(cities_count, caption = "Number of Cities included by State")
+```
+
+```{r echo=FALSE}
+
+    ##pseudo code
+    letter_count <- data.frame(matrix(NA,nrow=50, ncol=27))
+    letter_count[, 1] <- tolower(cities_count[, 3])
+    colnames(letter_count) <- c("State", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
+    getCount <- function(l, s){
+        count <- unlist(strsplit(s,""))
+        return(sum(count == l))
+    }
+    
+    for(i in 1:50){
+        letter_count[i, 2:27 ] <- sapply(letters, getCount, s = cities_count[i, 3])
+    }
+```
+
+### Part d
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+    #https://cran.r-project.org/web/packages/fiftystater/vignettes/fiftystater.html
+    library(ggplot2)
+    library(fiftystater)
+    library(mapproj)
+    
+    data("fifty_states") # this line is optional due to lazy data loading
+    crimes <- data.frame(state = tolower(rownames(USArrests)), USArrests)
+    # map_id creates the aesthetic mapping to the state name column in your data
+    p <- ggplot(cities_count, aes(map_id = State)) + 
+      # map points to the fifty_states shape data
+      geom_map(aes(fill = City_Num), map = fifty_states) + 
+      expand_limits(x = fifty_states$long, y = fifty_states$lat) +
+      coord_map() +
+      scale_x_continuous(breaks = NULL) + 
+      scale_y_continuous(breaks = NULL) +
+      labs(x = "", y = "") +
+      theme(legend.position = "bottom", 
+            panel.background = element_blank())
+    
+    p
+    #ggsave(plot = p, file = "HW5_Problem6_Plot_Settlage.pdf")
+    
+    # Second map
+    r0 <- which(apply(letter_count[, 2:27], 1, max) <4)
+    r1 <- which(apply(letter_count[, 2:27], 1, max) >3)
+    ind <- matrix(nrow = 50, ncol = 1)
+    ind[r0, 1] = 0
+    ind[r1, 1] = 1
+    p2_dat <- cbind(cities_count, ind)
+     p2 <- ggplot(p2_dat, aes(map_id = State)) + 
+      # map points to the fifty_states shape data
+      geom_map(aes(fill = as.factor(ind)), map = fifty_states) + 
+      expand_limits(x = fifty_states$long, y = fifty_states$lat) +
+      coord_map() +
+      scale_x_continuous(breaks = NULL) + 
+      scale_y_continuous(breaks = NULL) +
+      labs(x = "", y = "") +
+      theme(legend.position = "bottom", 
+            panel.background = element_blank())
+    
+    p2
+```
+
+Code for Problems 3-6
+
+```{r, echo=T, eval=F}
+# Problem 4
+
+# Question a
+sucess_fun <- function(x){
+  sum(x)/10
+}
+
+# Question b
+set.seed(12345)
+P4b_data <- matrix(rbinom(10, 1, prob = (30:40)/100), nrow = 10, ncol = 10)
+
+# Question c
+col_prop <- apply(P4b_data, 2, sucess_fun)
+row_prop <- apply(P4b_data, 1, sucess_fun)
+pander(rbind(col_prop, row_prop), caption = "Proportion of Success")
+
+# Question d
+set.seed(12345)
+
+# Function to create matrix
+prob_func <- function(x){
+  matrix(rbinom(10, 1, prob = x), nrow = 10, ncol = 1)
+}
+P4d_data <- mapply(prob_func, x = c(31:40)/100)
+
+# Calcualte marginal success
+col_prop2 <- apply(P4d_data, 2, sucess_fun)
+row_prop2 <- apply(P4d_data, 1, sucess_fun)
+pander(rbind(col_prop2, row_prop2), caption = "Proportion of Success")
+
+***************
+# Problem 5
+
+#Load into data
+url <- "http://www2.isye.gatech.edu/~jeffwu/book/data/starch.dat"
+P5_raw<-read.table(url, header=F, skip=1, fill=T, stringsAsFactors = F)
+colnames(P5_raw) <- c("Starch", "Strength", "Thickness")
+
+require(MASS)
+ggplot(P5_raw, aes(x = Thickness, y= Strength, colour = Starch)) +
+  stat_density2d(aes(alpha = ..density..), geom = 'raster', contour = FALSE) +
+  geom_point()+
+  expand_limits(x = 35, yend = 6)
+
+pander(summary(P5_raw), caption = "Summary of Data")
+pander(table(P5_raw$Starch), caption = "Summary of Starch")
+
+library(ggthemes)
+ggplot(P5_raw, aes(x = Thickness, y = Strength, fill = Starch)) +
+  geom_smooth(method = lm) +
+  geom_point(shape =21) +
+  facet_grid(.~Starch) +
+  theme_few() +
+  scale_colour_few()
+
+library(lattice)
+histogram(Strength ~ Thickness|as.factor(Starch), data = P5_raw,
+          main = "Strength and Thickness by Starch", 
+          xlab = "Starch")
+
+# Correlation and plot function
+panel.cor <- function(x, y, digits = 2, prefix = " ", cex.cor, ...){
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y, use = "complete.obs"))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste(prefix, txt, sep = " ")
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex.cor * (1 + r)/2)
+}
+
+panel.hist <- function(x, ...){
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5))
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks
+  nB <- length(breaks)
+  y <- h$counts
+  y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "white", ...)
+}
+
+pairs(P5_raw[, 2:3], upper.panel = panel.cor,
+      diag.panel = panel.hist,
+      lower.panel = panel.smooth)
+
+***********************
+# Problem 6
+# Part a
+  #we are grabbing a SQL set from here
+    # http://www.farinspace.com/wp-content/uploads/us_cities_and_states.zip
+
+    #read in data, looks like sql dump, blah
+    library(data.table)
+    states <- fread(input = "C:/Users/Echo/Desktop/states.sql", sep = "'", sep2 = ",", header = F, select = c(2,4))
+    colnames(states) <- c("State", "Abbre")
+    
+    ### YOU do the CITIES
+    ### I suggest the cities_extended.sql may have everything you need
+    ### can you figure out how to limit this to the 50?
+    cities <- fread(input = "C:/Users/Echo/Desktop/cities_extended.sql",sep = "'", sep2 = ",", header = F, select = c(2,4))
+    colnames(cities) <- c("City", "Abbre")
+    
+# Part b
+# Create a summary table of the number of cities included by state
+cities_count <- sqldf("
+    select Abbre, count(city) as City_Num, State
+    from cities_states
+    group by Abbre"
+    )
+cities_count[, 3] <- tolower(cities_count[, 3])
+pander(cities_count, caption = "Number of Cities included by State")
+
+# Part c
+ ##pseudo code
+    letter_count <- data.frame(matrix(NA,nrow=50, ncol=27))
+    letter_count[, 1] <- tolower(cities_count[, 3])
+    colnames(letter_count) <- c("State", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
+    getCount <- function(l, s){
+        count <- unlist(strsplit(s,""))
+        return(sum(count == l))
+    }
+    
+    for(i in 1:50){
+        letter_count[i, 2:27 ] <- sapply(letters, getCount, s = cities_count[i, 3])
+    }
+    
+# Part d
+#https://cran.r-project.org/web/packages/fiftystater/vignettes/fiftystater.html
+    library(ggplot2)
+    library(fiftystater)
+    library(mapproj)
+    
+    data("fifty_states") # this line is optional due to lazy data loading
+    crimes <- data.frame(state = tolower(rownames(USArrests)), USArrests)
+    # map_id creates the aesthetic mapping to the state name column in your data
+    p <- ggplot(cities_count, aes(map_id = State)) + 
+      # map points to the fifty_states shape data
+      geom_map(aes(fill = City_Num), map = fifty_states) + 
+      expand_limits(x = fifty_states$long, y = fifty_states$lat) +
+      coord_map() +
+      scale_x_continuous(breaks = NULL) + 
+      scale_y_continuous(breaks = NULL) +
+      labs(x = "", y = "") +
+      theme(legend.position = "bottom", 
+            panel.background = element_blank())
+    
+    p
+    #ggsave(plot = p, file = "HW5_Problem6_Plot_Settlage.pdf")
+    
+    # Second map
+    r0 <- which(apply(letter_count[, 2:27], 1, max) <4)
+    r1 <- which(apply(letter_count[, 2:27], 1, max) >3)
+    ind <- matrix(nrow = 50, ncol = 1)
+    ind[r0, 1] = 0
+    ind[r1, 1] = 1
+    p2_dat <- cbind(cities_count, ind)
+     p2 <- ggplot(p2_dat, aes(map_id = State)) + 
+      # map points to the fifty_states shape data
+      geom_map(aes(fill = as.factor(ind)), map = fifty_states) + 
+      expand_limits(x = fifty_states$long, y = fifty_states$lat) +
+      coord_map() +
+      scale_x_continuous(breaks = NULL) + 
+      scale_y_continuous(breaks = NULL) +
+      labs(x = "", y = "") +
+      theme(legend.position = "bottom", 
+            panel.background = element_blank())
+    
+    p2
+```
+
