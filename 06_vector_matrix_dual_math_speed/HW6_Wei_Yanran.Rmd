@@ -1,0 +1,166 @@
+---
+title: "R Notebook"
+output:
+  html_document: default
+  html_notebook: default
+  pdf_document: default
+---
+
+## Problem 2
+
+```{r, echo = F, message=FALSE, warning=FALSE}
+
+# Create data points
+set.seed(12345)
+y <- seq(from = 1, to = 100, length.out = 1e+05) + rnorm(1e+05)
+
+# Loop method
+system.time({
+  mean_y <- mean(y)
+  std_y1 <- 0
+  for (i in 1:length(y)){
+    std_y1 <- (y[i] - mean_y)^2 + std_y1
+    }
+  print(std_y1)
+})
+
+# Vector method
+system.time({
+  mean_y <- mean(y)
+  diff_y <- y - mean_y
+  std_y2 <- t(diff_y) %*% diff_y
+  print(std_y2)
+})
+```
+
+Vector operation menthod takes less time.
+
+## Problem 3
+
+```{r, echo = F, message=FALSE, warning=FALSE}
+
+# Create data point
+set.seed(1256)
+theta <- as.matrix(c(1,2),nrow=2)
+X <- cbind(1,rep(1:10,10))
+h <- X%*%theta+rnorm(100,0,0.2)
+m <- length(h)
+    
+# Gradient descent
+system.time({
+  alpha = 0.01
+tolerance <- 1e-8
+for (i in 1:10000){
+  grad_0 <- (1/m) * sum(((X%*%theta) - h))
+  grad_1 <- (1/m) * t(X[, 2]) %*% ((X%*%theta) - h)
+  theta_0 <- theta[1] - alpha * grad_0
+  theta_1 <- theta[2] - alpha * grad_1
+  if ((abs(theta_0 - theta[1]) > tolerance) & (abs(theta_1 - theta[2]) > tolerance)){
+    theta[1] <- theta_0
+    theta[2] <- theta_1
+  } else {
+    theta[1] <- theta_0
+    theta[2] <- theta_1
+    break
+  }
+}
+print(theta)})
+
+# Linear regression
+system.time({
+  lm_h <- lm(h~0+X)
+print(lm_h$coefficients)
+})
+```
+The tolerance I used is 1e-8. Step size is 0.01. And the result is same with regression method while taking longer time.
+
+## Problem 4
+
+```{r, echo = F, message=FALSE, warning=FALSE}
+system.time({
+  beta_4 <- solve(t(X) %*% X) %*% t(X) %*% h
+print(beta_4) 
+})
+```
+
+This method can be calculate by LSE mothod or regression. In this formula, X is a vector consisted of column of 1 and column of value of random variable x. The result will be a vector containing both $\theta_0$ and $\theta_1$.
+
+## Problem 5
+
+I shrink the sample size of G to 5000 becuase my system cannot allocate vector of size 1.9 Gb.
+```{r, echo = F, message=FALSE, warning=FALSE}
+set.seed(12456) 
+G <- matrix(sample(c(0,0.5,1),size=5000,replace=T),ncol=10)
+R <- cor(G) # R: 10 * 10 correlation matrix of G
+C <- kronecker(R, diag(500)) # C is a 500 * 500 block diagonal matrix
+id <- sample(1:1000,size=932,replace=F)
+q <- sample(c(0,0.5,1),size=4068,replace=T) # vector of length 4068
+A <- C[id, -id] # matrix of dimension 932 * 4068
+B <- C[-id, -id] # matrix of dimension 4068 * 4068
+p <- runif(932,0,1)
+r <- runif(4068,0,1)
+C<-NULL #save some memory space
+```
+
+### Part a
+
+```{r, echo = F, message=FALSE, warning=FALSE}
+library(pander)
+
+# Size of A and B
+size_A <- object.size(A)
+size_B <- object.size(B)
+pander(size_A, caption = "Size of A")
+pander(size_B, caption = "Size of B")
+
+# Calculation of y
+system.time({
+  y <- p + A %*% solve(B) %*% (q-r)
+})
+```
+
+The size of A is 30331208, the size of B is 132389192. It takes about 28s to calculate y.
+
+### Part b
+
+I try to use LU decomposition method and break A into three parts. PA = LU. P is the "pivot matrix". U is the result of the Gaussian elimination and L is the transformation made to achieve U. Then $AB^{-1}$ will be equal to U/L/(P*B). 
+
+### Part c
+
+```{r, echo = F, message=FALSE, warning=FALSE}
+library(Matrix)
+system.time({
+a <- t(A)
+b <- t(B)
+ex <- expand(lu(a))
+L <- ex$L
+P <- ex$P
+U <- ex$U
+x1 <- P%*%b
+x2 <- t(L) %*% x1
+x3 <- t(U) %*% x2
+y2 <- p + x3%*%(q-r)
+})
+```
+It takes about 15s to calculate y.
+
+```{r, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
